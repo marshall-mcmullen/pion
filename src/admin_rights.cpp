@@ -64,7 +64,9 @@ admin_rights::admin_rights(bool use_log)
     m_lock(m_mutex), m_user_id(-1), m_has_rights(false), m_use_log(use_log)
 {
     m_user_id = geteuid();
-    if ( seteuid(ADMIN_USER_ID) != 0 ) {
+	if ( m_user_id == ADMIN_USER_ID ) {
+		return;
+	} else if ( seteuid(ADMIN_USER_ID) != 0 ) {
         if (m_use_log)
             PION_LOG_ERROR(m_logger, "Unable to upgrade to administrative rights");
         m_lock.unlock();

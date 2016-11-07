@@ -13,21 +13,13 @@
 #include <pion/http/response_writer.hpp>
 #include <pion/http/server.hpp>
 
-
 namespace pion {    // begin namespace pion
 namespace http {    // begin namespace http
-    
-    
-// static members of basic_auth
-
-const unsigned int  basic_auth::CACHE_EXPIRATION = 300;  // 5 minutes
-
 
 // basic_auth member functions
 
 basic_auth::basic_auth(user_manager_ptr userManager, const std::string& realm)
-    : http::auth(userManager), m_realm(realm),
-    m_cache_cleanup_time(boost::posix_time::second_clock::universal_time())
+    : http::auth(userManager), m_realm(realm)
 {
     set_logger(PION_GET_LOGGER("pion.http.basic_auth"));
 }
@@ -37,39 +29,14 @@ bool basic_auth::handle_request(http::request_ptr& http_request_ptr, tcp::connec
     if (!need_authentication(http_request_ptr)) {
         return true; // this request does not require authentication
     }
-    
-    boost::posix_time::ptime time_now(boost::posix_time::second_clock::universal_time());
-    if (time_now > m_cache_cleanup_time + boost::posix_time::seconds(CACHE_EXPIRATION)) {
-        // expire cache
-        boost::mutex::scoped_lock cache_lock(m_cache_mutex);
-        user_cache_type::iterator i;
-        user_cache_type::iterator next=m_user_cache.begin();
-        while (next!=m_user_cache.end()) {
-            i=next;
-            ++next;
-            if (time_now > i->second.first + boost::posix_time::seconds(CACHE_EXPIRATION)) {
-                // ok - this is an old record.. expire it now
-                m_user_cache.erase(i);
-            }
-        }
-        m_cache_cleanup_time = time_now;
-    }
-    
-    // if we are here, we need to check if access authorized...
+
+	// if we are here, we need to check if access authorized...
     std::string authorization = http_request_ptr->get_header(http::types::HEADER_AUTHORIZATION);
     if (!authorization.empty()) {
         std::string credentials;
         if (parse_authorization(authorization, credentials)) {
             // to do - use fast cache to match with active credentials
             boost::mutex::scoped_lock cache_lock(m_cache_mutex);
-            user_cache_type::iterator user_cache_ptr=m_user_cache.find(credentials);
-            if (user_cache_ptr!=m_user_cache.end()) {
-                // we found the credentials in our cache...
-                // we can approve authorization now!
-                http_request_ptr->set_user(user_cache_ptr->second.second);
-                user_cache_ptr->second.first = time_now;
-                return true;
-            }
     
             std::string username;
             std::string password;
@@ -78,8 +45,6 @@ bool basic_auth::handle_request(http::request_ptr& http_request_ptr, tcp::connec
                 // match username/password
                 user_ptr user=m_user_manager->get_user(username, password);
                 if (user) {
-                    // add user to the cache
-                    m_user_cache.insert(std::make_pair(credentials, std::make_pair(time_now, user)));
                     // add user credentials to the request object
                     http_request_ptr->set_user(user);
                     return true;

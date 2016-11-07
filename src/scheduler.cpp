@@ -10,6 +10,7 @@
 #include <boost/exception/diagnostic_information.hpp>
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 #include <pion/scheduler.hpp>
+#include <sys/prctl.h>
 
 namespace pion {    // begin namespace pion
 
@@ -106,6 +107,7 @@ boost::system_time scheduler::get_wakeup_time(boost::uint32_t sleep_sec,
 }
                      
 void scheduler::process_service_work(boost::asio::io_service& service) {
+    prctl(PR_SET_NAME, "PionScheduler");
     while (m_is_running) {
         try {
             service.run();

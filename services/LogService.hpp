@@ -1,3 +1,5 @@
+#if defined(PION_DISABLE_LOGGING)
+
 // ---------------------------------------------------------------------
 // pion:  a Boost C++ framework for building lightweight HTTP interfaces
 // ---------------------------------------------------------------------
@@ -153,3 +155,6 @@ private:
 }   // end namespace pion
 
 #endif
+
+#endif // PION_DISABLED_LOGGING
+

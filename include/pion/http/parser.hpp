@@ -71,7 +71,7 @@ public:
         : public boost::system::error_category
     {
     public:
-        const char *name() const { return "parser"; }
+        const char *name() const noexcept { return "parser"; }
         std::string message(int ev) const {
             switch (ev) {
             case ERROR_METHOD_CHAR:

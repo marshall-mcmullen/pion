@@ -54,7 +54,7 @@ public:
         : public boost::system::error_category
     {
         virtual ~receive_error_t() {}
-        virtual inline const char *name() const { return "receive_error_t"; }
+        virtual inline const char *name() const noexcept { return "receive_error_t"; }
         virtual inline std::string message(int ev) const {
             std::string result;
             switch(ev) {

@@ -51,7 +51,7 @@ public:
         : public boost::system::error_category
     {
     public:
-        const char *name() const { return "SPDYDecompressor"; }
+        const char *name() const noexcept { return "SPDYDecompressor"; }
         std::string message(int ev) const {
             switch (ev) {
                 case ERROR_DECOMPRESSION_FAILED:

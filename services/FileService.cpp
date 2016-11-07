@@ -696,7 +696,8 @@ void FileService::createMIMETypes(void) {
     mime_types["png"] = "image/png";
     mime_types["jpg"] = "image/jpeg";
     mime_types["jpeg"] = "image/jpeg";
-    // ...
+    mime_types["json"] = "application/json";
+    mime_types["svg"] = "image/svg+xml";
 
     // set the static pointer
     m_mime_types_ptr = &mime_types;

@@ -156,23 +156,19 @@ void FileService::operator()(http::request_ptr& http_request_ptr, tcp::connectio
 #endif
         PION_LOG_WARN(m_logger, "Request for file outside of directory ("
                       << get_resource() << "): " << relative_path);
-        static const std::string FORBIDDEN_HTML_START =
+        static const std::string FORBIDDEN_HTML =
             "<html><head>\n"
             "<title>403 Forbidden</title>\n"
             "</head><body>\n"
             "<h1>Forbidden</h1>\n"
-            "<p>The requested URL ";
-        static const std::string FORBIDDEN_HTML_FINISH =
-            " is not in the configured directory.</p>\n"
+            "<p>The requested URL is not in the configured directory.</p>\n"
             "</body></html>\n";
         http::response_writer_ptr writer(http::response_writer::create(tcp_conn, *http_request_ptr,
                                      boost::bind(&tcp::connection::finish, tcp_conn)));
         writer->get_response().set_status_code(http::types::RESPONSE_CODE_FORBIDDEN);
         writer->get_response().set_status_message(http::types::RESPONSE_MESSAGE_FORBIDDEN);
         if (http_request_ptr->get_method() != http::types::REQUEST_METHOD_HEAD) {
-            writer->write_no_copy(FORBIDDEN_HTML_START);
-            writer << http_request_ptr->get_resource();
-            writer->write_no_copy(FORBIDDEN_HTML_FINISH);
+            writer->write_no_copy(FORBIDDEN_HTML);
         }
         writer->send();
         return;
@@ -182,23 +178,19 @@ void FileService::operator()(http::request_ptr& http_request_ptr, tcp::connectio
     if (boost::filesystem::is_directory(file_path)) {
         PION_LOG_WARN(m_logger, "Request for directory ("
                       << get_resource() << "): " << relative_path);
-        static const std::string FORBIDDEN_HTML_START =
+        static const std::string FORBIDDEN_HTML =
             "<html><head>\n"
             "<title>403 Forbidden</title>\n"
             "</head><body>\n"
             "<h1>Forbidden</h1>\n"
-            "<p>The requested URL ";
-        static const std::string FORBIDDEN_HTML_FINISH =
-            " is a directory.</p>\n"
+            "<p>The requested URL is a directory.</p>\n"
             "</body></html>\n";
         http::response_writer_ptr writer(http::response_writer::create(tcp_conn, *http_request_ptr,
                                      boost::bind(&tcp::connection::finish, tcp_conn)));
         writer->get_response().set_status_code(http::types::RESPONSE_CODE_FORBIDDEN);
         writer->get_response().set_status_message(http::types::RESPONSE_MESSAGE_FORBIDDEN);
         if (http_request_ptr->get_method() != http::types::REQUEST_METHOD_HEAD) {
-            writer->write_no_copy(FORBIDDEN_HTML_START);
-            writer << http_request_ptr->get_resource();
-            writer->write_no_copy(FORBIDDEN_HTML_FINISH);
+            writer->write_no_copy(FORBIDDEN_HTML);
         }
         writer->send();
         return;
@@ -413,22 +405,18 @@ void FileService::operator()(http::request_ptr& http_request_ptr, tcp::connectio
     {
         // If not writable, then send 405 (Method Not Allowed) response for POST, PUT or DELETE requests.
         if (!m_writable) {
-            static const std::string NOT_ALLOWED_HTML_START =
+            static const std::string NOT_ALLOWED_HTML =
                 "<html><head>\n"
                 "<title>405 Method Not Allowed</title>\n"
                 "</head><body>\n"
                 "<h1>Not Allowed</h1>\n"
-                "<p>The requested method ";
-            static const std::string NOT_ALLOWED_HTML_FINISH =
-                " is not allowed on this server.</p>\n"
+                "<p>The requested method is not allowed on this server.</p>\n"
                 "</body></html>\n";
             http::response_writer_ptr writer(http::response_writer::create(tcp_conn, *http_request_ptr,
                                          boost::bind(&tcp::connection::finish, tcp_conn)));
             writer->get_response().set_status_code(http::types::RESPONSE_CODE_METHOD_NOT_ALLOWED);
             writer->get_response().set_status_message(http::types::RESPONSE_MESSAGE_METHOD_NOT_ALLOWED);
-            writer->write_no_copy(NOT_ALLOWED_HTML_START);
-            writer << http_request_ptr->get_method();
-            writer->write_no_copy(NOT_ALLOWED_HTML_FINISH);
+            writer->write_no_copy(NOT_ALLOWED_HTML);
             writer->get_response().add_header("Allow", "GET, HEAD");
             writer->send();
         } else {
@@ -444,38 +432,29 @@ void FileService::operator()(http::request_ptr& http_request_ptr, tcp::connectio
                     // The file doesn't exist yet, so it will be created below, unless the
                     // directory of the requested file also doesn't exist.
                     if (!boost::filesystem::exists(file_path.branch_path())) {
-                        static const std::string NOT_FOUND_HTML_START =
+                        static const std::string NOT_FOUND_HTML =
                             "<html><head>\n"
                             "<title>404 Not Found</title>\n"
                             "</head><body>\n"
                             "<h1>Not Found</h1>\n"
-                            "<p>The directory of the requested URL ";
-                        static const std::string NOT_FOUND_HTML_FINISH =
-                            " was not found on this server.</p>\n"
+                            "<p>The directory of the requested URL was not found on this server.</p>\n"
                             "</body></html>\n";
                         writer->get_response().set_status_code(http::types::RESPONSE_CODE_NOT_FOUND);
                         writer->get_response().set_status_message(http::types::RESPONSE_MESSAGE_NOT_FOUND);
-                        writer->write_no_copy(NOT_FOUND_HTML_START);
-                        writer << http_request_ptr->get_resource();
-                        writer->write_no_copy(NOT_FOUND_HTML_FINISH);
+                        writer->write_no_copy(NOT_FOUND_HTML);
                         writer->send();
                         return;
                     }
-                    static const std::string CREATED_HTML_START =
+                    static const std::string CREATED_HTML =
                         "<html><head>\n"
                         "<title>201 Created</title>\n"
                         "</head><body>\n"
                         "<h1>Created</h1>\n"
-                        "<p>";
-                    static const std::string CREATED_HTML_FINISH =
-                        "</p>\n"
                         "</body></html>\n";
                     writer->get_response().set_status_code(http::types::RESPONSE_CODE_CREATED);
                     writer->get_response().set_status_message(http::types::RESPONSE_MESSAGE_CREATED);
                     writer->get_response().add_header(http::types::HEADER_LOCATION, http_request_ptr->get_resource());
-                    writer->write_no_copy(CREATED_HTML_START);
-                    writer << http_request_ptr->get_resource();
-                    writer->write_no_copy(CREATED_HTML_FINISH);
+                    writer->write_no_copy(CREATED_HTML);
                 }
                 std::ios_base::openmode mode = http_request_ptr->get_method() == http::types::REQUEST_METHOD_POST?
                                                std::ios::app : std::ios::out;
@@ -483,20 +462,16 @@ void FileService::operator()(http::request_ptr& http_request_ptr, tcp::connectio
                 file_stream.write(http_request_ptr->get_content(), http_request_ptr->get_content_length());
                 file_stream.close();
                 if (!boost::filesystem::exists(file_path)) {
-                    static const std::string PUT_FAILED_HTML_START =
+                    static const std::string PUT_FAILED_HTML =
                         "<html><head>\n"
                         "<title>500 Server Error</title>\n"
                         "</head><body>\n"
                         "<h1>Server Error</h1>\n"
-                        "<p>Error writing to ";
-                    static const std::string PUT_FAILED_HTML_FINISH =
-                        ".</p>\n"
+                        "<p>Error writing to URL.</p>\n"
                         "</body></html>\n";
                     writer->get_response().set_status_code(http::types::RESPONSE_CODE_SERVER_ERROR);
                     writer->get_response().set_status_message(http::types::RESPONSE_MESSAGE_SERVER_ERROR);
-                    writer->write_no_copy(PUT_FAILED_HTML_START);
-                    writer << http_request_ptr->get_resource();
-                    writer->write_no_copy(PUT_FAILED_HTML_FINISH);
+                    writer->write_no_copy(PUT_FAILED_HTML);
                 }
                 writer->send();
             } else if (http_request_ptr->get_method() == http::types::REQUEST_METHOD_DELETE) {
@@ -509,22 +484,16 @@ void FileService::operator()(http::request_ptr& http_request_ptr, tcp::connectio
                         writer->get_response().set_status_message(http::types::RESPONSE_MESSAGE_NO_CONTENT);
                         writer->send();
                     } catch (std::exception& e) {
-                        static const std::string DELETE_FAILED_HTML_START =
+                        static const std::string DELETE_FAILED_HTML =
                             "<html><head>\n"
                             "<title>500 Server Error</title>\n"
                             "</head><body>\n"
                             "<h1>Server Error</h1>\n"
-                            "<p>Could not delete ";
-                        static const std::string DELETE_FAILED_HTML_FINISH =
-                            ".</p>\n"
+                            "<p>Could not delete.</p>\n"
                             "</body></html>\n";
                         writer->get_response().set_status_code(http::types::RESPONSE_CODE_SERVER_ERROR);
                         writer->get_response().set_status_message(http::types::RESPONSE_MESSAGE_SERVER_ERROR);
-                        writer->write_no_copy(DELETE_FAILED_HTML_START);
-                        writer << http_request_ptr->get_resource()
-                            << ".</p><p>"
-                            << boost::diagnostic_information(e);
-                        writer->write_no_copy(DELETE_FAILED_HTML_FINISH);
+                        writer->write_no_copy(DELETE_FAILED_HTML);
                         writer->send();
                     }
                 }
@@ -538,22 +507,18 @@ void FileService::operator()(http::request_ptr& http_request_ptr, tcp::connectio
     }
     // Any method not handled above is unimplemented.
     else {
-        static const std::string NOT_IMPLEMENTED_HTML_START =
+        static const std::string NOT_IMPLEMENTED_HTML =
             "<html><head>\n"
             "<title>501 Not Implemented</title>\n"
             "</head><body>\n"
             "<h1>Not Implemented</h1>\n"
-            "<p>The requested method ";
-        static const std::string NOT_IMPLEMENTED_HTML_FINISH =
-            " is not implemented on this server.</p>\n"
+            "<p>The requested method is not implemented on this server.</p>\n"
             "</body></html>\n";
         http::response_writer_ptr writer(http::response_writer::create(tcp_conn, *http_request_ptr,
                                      boost::bind(&tcp::connection::finish, tcp_conn)));
         writer->get_response().set_status_code(http::types::RESPONSE_CODE_NOT_IMPLEMENTED);
         writer->get_response().set_status_message(http::types::RESPONSE_MESSAGE_NOT_IMPLEMENTED);
-        writer->write_no_copy(NOT_IMPLEMENTED_HTML_START);
-        writer << http_request_ptr->get_method();
-        writer->write_no_copy(NOT_IMPLEMENTED_HTML_FINISH);
+        writer->write_no_copy(NOT_IMPLEMENTED_HTML);
         writer->send();
     }
 }
@@ -561,23 +526,19 @@ void FileService::operator()(http::request_ptr& http_request_ptr, tcp::connectio
 void FileService::sendNotFoundResponse(http::request_ptr& http_request_ptr,
                                        tcp::connection_ptr& tcp_conn)
 {
-    static const std::string NOT_FOUND_HTML_START =
+    static const std::string NOT_FOUND_HTML =
         "<html><head>\n"
         "<title>404 Not Found</title>\n"
         "</head><body>\n"
         "<h1>Not Found</h1>\n"
-        "<p>The requested URL ";
-    static const std::string NOT_FOUND_HTML_FINISH =
-        " was not found on this server.</p>\n"
+        "<p>The requested URL was not found on this server.</p>\n"
         "</body></html>\n";
     http::response_writer_ptr writer(http::response_writer::create(tcp_conn, *http_request_ptr,
                                  boost::bind(&tcp::connection::finish, tcp_conn)));
     writer->get_response().set_status_code(http::types::RESPONSE_CODE_NOT_FOUND);
     writer->get_response().set_status_message(http::types::RESPONSE_MESSAGE_NOT_FOUND);
     if (http_request_ptr->get_method() != http::types::REQUEST_METHOD_HEAD) {
-        writer->write_no_copy(NOT_FOUND_HTML_START);
-        writer << http_request_ptr->get_resource();
-        writer->write_no_copy(NOT_FOUND_HTML_FINISH);
+        writer->write_no_copy(NOT_FOUND_HTML);
     }
     writer->send();
 }

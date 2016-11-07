@@ -191,22 +191,18 @@ void server::handle_bad_request(http::request_ptr& http_request_ptr,
 void server::handle_not_found_request(http::request_ptr& http_request_ptr,
                                        tcp::connection_ptr& tcp_conn)
 {
-    static const std::string NOT_FOUND_HTML_START =
+    static const std::string NOT_FOUND_HTML =
         "<html><head>\n"
         "<title>404 Not Found</title>\n"
         "</head><body>\n"
         "<h1>Not Found</h1>\n"
-        "<p>The requested URL ";
-    static const std::string NOT_FOUND_HTML_FINISH =
-        " was not found on this server.</p>\n"
+        "<p>The requested URL was not found on this server.</p>\n"
         "</body></html>\n";
     http::response_writer_ptr writer(http::response_writer::create(tcp_conn, *http_request_ptr,
                                                             boost::bind(&tcp::connection::finish, tcp_conn)));
     writer->get_response().set_status_code(http::types::RESPONSE_CODE_NOT_FOUND);
     writer->get_response().set_status_message(http::types::RESPONSE_MESSAGE_NOT_FOUND);
-    writer->write_no_copy(NOT_FOUND_HTML_START);
-    writer << http_request_ptr->get_resource();
-    writer->write_no_copy(NOT_FOUND_HTML_FINISH);
+    writer->write_no_copy(NOT_FOUND_HTML);
     writer->send();
 }
 
